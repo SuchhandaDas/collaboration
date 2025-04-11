@@ -30,6 +30,7 @@ public class IdeaBuilder {
                 .tagNames(idea.getTags().stream().map(Tag::getName).collect(Collectors.toSet()))
                 .createdBy(EmployeeDTO.builder().id(idea.getCreatedBy().getId()).name(idea.getCreatedBy().getName()).build())
                 .createdAt(LocalDateTime.now())
+                .voteCount(idea.getVotes().size())
                 .build();
     }
 }

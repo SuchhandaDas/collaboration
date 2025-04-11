@@ -1,18 +1,16 @@
 package com.test.collaboration.services.impl;
 
-import com.test.collaboration.entities.Employee;
-import com.test.collaboration.entities.Idea;
-import com.test.collaboration.entities.Tag;
-import com.test.collaboration.exceptions.EmployeeNotFoundException;
-import com.test.collaboration.exceptions.InvalidIdeaRequestException;
-import com.test.collaboration.exceptions.InvalidTagsException;
+import com.test.collaboration.builders.IdeaBuilder;
+import com.test.collaboration.entities.*;
+import com.test.collaboration.enums.SortBy;
+import com.test.collaboration.exceptions.*;
 import com.test.collaboration.models.IdeaDTO;
-import com.test.collaboration.repositories.EmployeeRepository;
-import com.test.collaboration.repositories.TagRepository;
+import com.test.collaboration.repositories.*;
 import com.test.collaboration.services.IdeaService;
+import jakarta.transaction.Transactional;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.test.collaboration.builders.IdeaBuilder.buildIdeaDTO;
 import static com.test.collaboration.builders.IdeaBuilder.buildIdeaEntity;
@@ -21,10 +19,16 @@ import static com.test.collaboration.validators.IdeaValidator.isValid;
 public class IdeaServiceImpl implements IdeaService {
     private final EmployeeRepository employeeRepo;
     private final TagRepository tagRepo;
+    private final IdeaRepository ideaRepo;
+    private final VoteRepository voteRepo;
+    private final CollaborationRepository collaborationRepository;
 
-    public IdeaServiceImpl(EmployeeRepository employeeRepo, TagRepository tagRepo) {
+    public IdeaServiceImpl(EmployeeRepository employeeRepo, TagRepository tagRepo, IdeaRepository ideaRepo, VoteRepository voteRepo, CollaborationRepository collaborationRepository) {
         this.employeeRepo = employeeRepo;
         this.tagRepo = tagRepo;
+        this.ideaRepo = ideaRepo;
+        this.voteRepo = voteRepo;
+        this.collaborationRepository = collaborationRepository;
     }
 
     @Override
@@ -50,5 +54,91 @@ public class IdeaServiceImpl implements IdeaService {
         Idea idea = buildIdeaEntity(ideaDTO, tags, creator);
 
         return buildIdeaDTO(idea);
+    }
+
+    @Override
+    public List<IdeaDTO> getAllIdeas(String sortBy) {
+        SortBy sortByEnum = null;
+
+        //validate sortBy string
+        try {
+            sortByEnum = SortBy.valueOf(sortBy);
+        } catch (IllegalArgumentException e) {
+            throw new InvalidSortByException("Invalid sortBy: " + sortBy + " , can only be VOTES or CREATED_AT");
+        }
+
+        List<Idea> ideas = ideaRepo.findAll();
+
+        switch (sortByEnum) {
+            case VOTES:
+                ideas.sort(Comparator.comparingLong(a -> a.getVotes().size()));
+                break;
+            case CREATED_AT:
+                ideas.sort(Comparator.comparing(Idea::getCreatedAt).reversed());
+        }
+
+        return ideas.stream().map(IdeaBuilder::buildIdeaDTO).collect(Collectors.toList());
+    }
+
+    @Transactional
+    public void voteIdea(Long ideaId, Long voterId) {
+        Idea idea = ideaRepo.findById(ideaId)
+                .orElseThrow(() -> new InvalidIdeaRequestException("IdeaID: " + ideaId + " not found"));
+
+        if (idea.getCreatedBy().getId().equals(voterId)) {
+            throw new CreatorSelfUpvoteException("You can't vote on your own idea");
+        }
+
+        Employee voter = employeeRepo.findById(voterId)
+                .orElseThrow(() -> new EmployeeNotFoundException("EmployeeId: " + voterId + " not found"));
+
+        if (voteRepo.existsByIdeaAndVoter(idea, voter)) {
+            throw new InvalidVoteRequestException("Already voted");
+        }
+
+        Vote vote = Vote.builder()
+                .idea(idea)
+                .voter(voter)
+                .build();
+
+        voteRepo.save(vote);
+    }
+
+    @Transactional
+    public void collaborate(Long ideaId, Long collaboratorId) {
+        Idea idea = ideaRepo.findById(ideaId)
+                .orElseThrow(() -> new IdeaNotFoundException("IdeaId: " + ideaId + " not found"));
+
+        Employee employee = employeeRepo.findById(collaboratorId)
+                .orElseThrow(() -> new EmployeeNotFoundException("EmployeeId: " + collaboratorId + " not found"));
+
+        if (collaborationRepository.existsByIdeaAndCollaborator(idea, employee)) {
+            throw new DuplicateCollaborationRequest("Already collaborating");
+        }
+
+        Collaboration collaboration = Collaboration.builder()
+                .collaborator(employee)
+                .idea(idea)
+                .build();
+
+        collaborationRepository.save(collaboration);
+    }
+
+    @Override
+    public List<Employee> getCollaborators(Long ideaId) {
+        Idea idea = ideaRepo.findById(ideaId)
+                .orElseThrow(() -> new IdeaNotFoundException("IdeaId: " + ideaId + " not found"));
+        List<Collaboration> collaborations = collaborationRepository.findByIdea(idea);
+
+        if (collaborations.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        List<Employee> result = new ArrayList<>();
+
+        for (Collaboration c : collaborations) {
+            result.add(c.getCollaborator());
+        }
+        return result;
     }
 }

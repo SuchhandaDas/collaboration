@@ -19,4 +19,5 @@ public class IdeaDTO {
     private Set<String> tagNames;
     private EmployeeDTO createdBy;
     private LocalDateTime createdAt;
+    private Integer voteCount;
 }

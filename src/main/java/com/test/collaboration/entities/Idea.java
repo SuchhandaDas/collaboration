@@ -28,4 +28,7 @@ public class Idea {
 
     @ManyToMany
     private Set<Tag> tags;
+
+    @OneToMany
+    private Set<Vote> votes;
 }

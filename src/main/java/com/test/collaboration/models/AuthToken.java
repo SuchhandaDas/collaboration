@@ -16,7 +16,7 @@ public class AuthToken {
     private long employeeId;
     private LocalDateTime expiry;
 
-    boolean isExpired() {
+    public boolean isExpired() {
         return expiry.isBefore(LocalDateTime.now());
     }
 }

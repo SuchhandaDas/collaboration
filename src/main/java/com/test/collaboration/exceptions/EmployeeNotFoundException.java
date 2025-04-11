@@ -1,0 +1,7 @@
+package com.test.collaboration.exceptions;
+
+public class EmployeeNotFoundException extends RuntimeException {
+    public EmployeeNotFoundException(String message) {
+        super(message);
+    }
+}

@@ -1,6 +1,5 @@
-package com.test.collaboration.entities;
+package com.test.collaboration.models;
 
-import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -10,22 +9,14 @@ import java.time.LocalDateTime;
 import java.util.Set;
 
 @Data
-@Entity
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class Idea {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+public class IdeaDTO {
     private Long id;
-
     private String title;
     private String description;
+    private Set<String> tagNames;
+    private EmployeeDTO createdBy;
     private LocalDateTime createdAt;
-
-    @ManyToOne
-    private Employee createdBy;
-
-    @ManyToMany
-    private Set<Tag> tags;
 }

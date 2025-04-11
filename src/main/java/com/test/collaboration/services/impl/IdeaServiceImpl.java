@@ -8,6 +8,7 @@ import com.test.collaboration.models.IdeaDTO;
 import com.test.collaboration.repositories.*;
 import com.test.collaboration.services.IdeaService;
 import jakarta.transaction.Transactional;
+import org.springframework.stereotype.Service;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -16,6 +17,7 @@ import static com.test.collaboration.builders.IdeaBuilder.buildIdeaDTO;
 import static com.test.collaboration.builders.IdeaBuilder.buildIdeaEntity;
 import static com.test.collaboration.validators.IdeaValidator.isValid;
 
+@Service
 public class IdeaServiceImpl implements IdeaService {
     private final EmployeeRepository employeeRepo;
     private final TagRepository tagRepo;
@@ -31,6 +33,7 @@ public class IdeaServiceImpl implements IdeaService {
         this.collaborationRepository = collaborationRepository;
     }
 
+    @Transactional
     @Override
     public IdeaDTO createIdea(Long employeeId, IdeaDTO ideaDTO) {
         // VALIDATE ideaDTO
@@ -52,7 +55,7 @@ public class IdeaServiceImpl implements IdeaService {
 
         // create idea
         Idea idea = buildIdeaEntity(ideaDTO, tags, creator);
-
+        ideaRepo.save(idea);
         return buildIdeaDTO(idea);
     }
 
@@ -81,6 +84,7 @@ public class IdeaServiceImpl implements IdeaService {
     }
 
     @Transactional
+    @Override
     public void voteIdea(Long ideaId, Long voterId) {
         Idea idea = ideaRepo.findById(ideaId)
                 .orElseThrow(() -> new InvalidIdeaRequestException("IdeaID: " + ideaId + " not found"));
@@ -105,6 +109,7 @@ public class IdeaServiceImpl implements IdeaService {
     }
 
     @Transactional
+    @Override
     public void collaborate(Long ideaId, Long collaboratorId) {
         Idea idea = ideaRepo.findById(ideaId)
                 .orElseThrow(() -> new IdeaNotFoundException("IdeaId: " + ideaId + " not found"));
@@ -125,7 +130,7 @@ public class IdeaServiceImpl implements IdeaService {
     }
 
     @Override
-    public List<Employee> getCollaborators(Long ideaId) {
+    public List<String> getCollaborators(Long ideaId) {
         Idea idea = ideaRepo.findById(ideaId)
                 .orElseThrow(() -> new IdeaNotFoundException("IdeaId: " + ideaId + " not found"));
         List<Collaboration> collaborations = collaborationRepository.findByIdea(idea);
@@ -139,6 +144,6 @@ public class IdeaServiceImpl implements IdeaService {
         for (Collaboration c : collaborations) {
             result.add(c.getCollaborator());
         }
-        return result;
+        return result.stream().map(Employee::getName).collect(Collectors.toList());
     }
 }

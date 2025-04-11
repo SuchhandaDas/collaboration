@@ -14,5 +14,5 @@ public interface IdeaService {
 
     void collaborate(Long ideaId, Long collaboratorId);
 
-    List<Employee> getCollaborators(Long ideaId);
+    List<String> getCollaborators(Long ideaId);
 }

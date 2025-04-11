@@ -5,6 +5,7 @@ import com.test.collaboration.entities.Idea;
 import com.test.collaboration.entities.Tag;
 import com.test.collaboration.models.EmployeeDTO;
 import com.test.collaboration.models.IdeaDTO;
+import org.springframework.util.CollectionUtils;
 
 import java.time.LocalDateTime;
 import java.util.Set;
@@ -30,7 +31,7 @@ public class IdeaBuilder {
                 .tagNames(idea.getTags().stream().map(Tag::getName).collect(Collectors.toSet()))
                 .createdBy(EmployeeDTO.builder().id(idea.getCreatedBy().getId()).name(idea.getCreatedBy().getName()).build())
                 .createdAt(LocalDateTime.now())
-                .voteCount(idea.getVotes().size())
+                .voteCount(CollectionUtils.isEmpty(idea.getVotes()) ? 0 : idea.getVotes().size())
                 .build();
     }
 }

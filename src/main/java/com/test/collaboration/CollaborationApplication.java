@@ -22,17 +22,4 @@ public class CollaborationApplication {
 		reg.addUrlPatterns("/*");
 		return reg;
 	}
-
-	@Bean
-	public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-		return http
-				.csrf(csrf -> csrf.disable())
-				.authorizeHttpRequests(auth -> auth
-						.requestMatchers("/auth/**").permitAll()
-						.anyRequest().authenticated()
-				)
-				.build();
-	}
-
-
 }

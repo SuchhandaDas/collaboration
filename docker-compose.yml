@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres
+    container_name: my-postgres
+    environment:
+      POSTGRES_USER: collabuser
+      POSTGRES_PASSWORD: collabpass
+      POSTGRES_DB: collaboration
+    ports:
+      - "5432:5432"
+    networks:
+      - pg-network
+
+networks:
+  pg-network:

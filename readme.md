@@ -17,7 +17,7 @@ A Spring Boot-based web application that allows employees to create, vote on, an
 
 ---
 
-## 🛠️ Tech Stack
+##  Tech Stack
 
 - **Backend**: Java 17, Spring Boot
 - **Security**: Spring Security, JWT (JSON Web Token)
@@ -27,14 +27,19 @@ A Spring Boot-based web application that allows employees to create, vote on, an
 
 ---
 
-## 🛠️ Set up Database to start application
+##  Commands to test application
 [View docker-compose.yml](./docker-compose.yml)
 
-Run command ```docker-compose up -d``` in terminal
+[View Dockerfile](./Dockerfile)
 
+To start application, just run command ```docker-compose up --build``` 
 
+To test functionality, all APIs are in the collection file
+[View collaboration api.postman_collection.json](./collaboration api.postman_collection.json)
 
-## 📁 Schema Structure
+To stop application, run command ```docker-compose down```
+
+##  Schema Structure
 ![img.png](img.png)
 
 ## 

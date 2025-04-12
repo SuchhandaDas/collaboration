@@ -1,54 +1,39 @@
 package com.test.collaboration.controllers;
 
-import com.test.collaboration.entities.Employee;
-import com.test.collaboration.entities.Token;
+import com.test.collaboration.exceptions.InvalidLoginCredentials;
 import com.test.collaboration.models.EmployeeDTO;
-import com.test.collaboration.repositories.EmployeeRepository;
-import com.test.collaboration.repositories.TokenRepository;
-import com.test.collaboration.util.JWTUtil;
-import io.jsonwebtoken.Claims;
+import com.test.collaboration.services.AuthService;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 
+@Slf4j
 @Controller
 @RequestMapping("/auth")
 public class AuthController {
-    private final TokenRepository tokenRepository;
-    private final EmployeeRepository employeeRepository;
-    private final JWTUtil jwtUtil;
+    private final AuthService authService;
 
-    public AuthController(TokenRepository tokenRepository, EmployeeRepository employeeRepository, JWTUtil jwtUtil) {
-        this.tokenRepository = tokenRepository;
-        this.employeeRepository = employeeRepository;
-        this.jwtUtil = jwtUtil;
+    public AuthController(AuthService authService) {
+        this.authService = authService;
     }
 
     @PostMapping("/login")
     public ResponseEntity<String> login(@RequestBody EmployeeDTO employeeDTO) {
-        if (!employeeRepository.existsById(employeeDTO.getId())) {
-            Employee employee = Employee.builder()
-                    .id(employeeDTO.getId())
-                    .name(employeeDTO.getName())
-                    .build();
-            employeeRepository.save(employee);
+        try {
+            return ResponseEntity.ok(authService.login(employeeDTO));
+        } catch (InvalidLoginCredentials e) {
+            log.error(e.getMessage());
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (Exception e) {
+            log.error(e.getMessage());
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
-        String jwtToken = jwtUtil.generateToken(employeeDTO.getId());
-        Claims claim = jwtUtil.getClaimsFromToken(jwtToken);
-
-        Token token = Token.builder()
-                .employeeId(employeeDTO.getId())
-                .token(jwtToken)
-                .issuedAt(claim.getIssuedAt().toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalDateTime())
-                .expiresAt(claim.getExpiration().toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalDateTime())
-                .revoked(false)
-                .build();
-        tokenRepository.save(token);
-        return ResponseEntity.ok(jwtToken);
     }
 
     @PostMapping("/logout")
@@ -56,10 +41,7 @@ public class AuthController {
         String authHeader = req.getHeader("Authorization");
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             String token = authHeader.substring(7);
-            tokenRepository.findById(token).ifPresent(t-> {
-                t.setRevoked(true);
-                tokenRepository.save(t);
-            });
+            authService.logout(token);
         }
         return ResponseEntity.ok("Successfully logged out");
     }

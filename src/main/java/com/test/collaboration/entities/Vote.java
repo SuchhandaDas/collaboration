@@ -1,10 +1,9 @@
 package com.test.collaboration.entities;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
+@Data
 @Entity
 @Builder
 @NoArgsConstructor
@@ -15,6 +14,8 @@ public class Vote {
     private Long id;
 
     @ManyToOne
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     private Idea idea;
 
     @ManyToOne

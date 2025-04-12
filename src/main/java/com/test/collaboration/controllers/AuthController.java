@@ -52,7 +52,7 @@ public class AuthController {
     }
 
     @PostMapping("/logout")
-    public void logout(HttpServletRequest req) {
+    public ResponseEntity<?> logout(HttpServletRequest req) {
         String authHeader = req.getHeader("Authorization");
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             String token = authHeader.substring(7);
@@ -61,5 +61,6 @@ public class AuthController {
                 tokenRepository.save(t);
             });
         }
+        return ResponseEntity.ok("Successfully logged out");
     }
 }

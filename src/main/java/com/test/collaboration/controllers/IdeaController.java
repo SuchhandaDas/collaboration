@@ -44,20 +44,40 @@ public class IdeaController {
     }
 
     @PostMapping("/{id}/vote")
-    public void voteIdea(@PathVariable Long id, HttpServletRequest req) {
-        String employeeId = (String) req.getAttribute("employeeId");
-        ideaService.voteIdea(id, Long.parseLong(employeeId));
+    public ResponseEntity<?> voteIdea(@PathVariable Long id, HttpServletRequest req) {
+        try {
+            String employeeId = (String) req.getAttribute("employeeId");
+            ideaService.voteIdea(id, Long.parseLong(employeeId));
+            return ResponseEntity.ok("Successfully voted");
+        } catch (Exception e) {
+            log.error(e.getMessage());
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
     }
 
     @PostMapping("/{id}/collaborate")
-    public void collaborate(@PathVariable Long id, HttpServletRequest req) {
-        String employeeId = (String) req.getAttribute("employeeId");
-        ideaService.collaborate(id, Long.parseLong(employeeId));
+    public ResponseEntity<?> collaborate(@PathVariable Long id, HttpServletRequest req) {
+        try {
+            String employeeId = (String) req.getAttribute("employeeId");
+            ideaService.collaborate(id, Long.parseLong(employeeId));
+            return ResponseEntity.ok("Successfully collaborating on Idea");
+        } catch (Exception e) {
+            log.error(e.getMessage());
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
     }
 
     @GetMapping("/{id}/collaborators")
-    public List<String> getCollaborators(@PathVariable Long id) {
-        return ideaService.getCollaborators(id);
+    public ResponseEntity<?> getCollaborators(@PathVariable Long id) {
+        try {
+            return ResponseEntity.ok(ideaService.getCollaborators(id));
+        } catch (Exception e) {
+            log.error(e.getMessage());
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
     }
 
 }

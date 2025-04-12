@@ -70,13 +70,15 @@ public class IdeaServiceImpl implements IdeaService {
             throw new InvalidSortByException("Invalid sortBy: " + sortBy + " , can only be VOTES or CREATED_AT");
         }
 
-        List<Idea> ideas = ideaRepo.findAll();
+        List<Idea> ideas = new ArrayList<>();
 
         switch (sortByEnum) {
             case VOTES:
-                ideas.sort(Comparator.comparingLong(a -> a.getVotes().size()));
+                ideas = ideaRepo.findAllWithVotes();
+                ideas.sort((a, b) -> b.getVotes().size() - a.getVotes().size());
                 break;
             case CREATED_AT:
+                ideas = ideaRepo.findAll();
                 ideas.sort(Comparator.comparing(Idea::getCreatedAt).reversed());
         }
 
@@ -116,6 +118,10 @@ public class IdeaServiceImpl implements IdeaService {
 
         Employee employee = employeeRepo.findById(collaboratorId)
                 .orElseThrow(() -> new EmployeeNotFoundException("EmployeeId: " + collaboratorId + " not found"));
+
+        if (idea.getCreatedBy().getId().equals(employee.getId())) {
+            throw new CreatorSelfCollaborateException("You can't collaborate on your own idea");
+        }
 
         if (collaborationRepository.existsByIdeaAndCollaborator(idea, employee)) {
             throw new DuplicateCollaborationRequest("Already collaborating");
